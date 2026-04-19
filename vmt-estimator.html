@@ -942,10 +942,10 @@
       data: {
         labels,
         datasets: [
-          { label:'Total projected VMT', data:tot,  borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.07)', fill:true,  tension:0.35, borderWidth:3, pointRadius:pr, borderDash:[] },
-          { label:'Lane-miles effect',   data:lane, borderColor:'#1D9E75', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, borderDash:[6,4] },
-          { label:'Population effect',   data:pop,  borderColor:'#BA7517', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, borderDash:[6,4] },
-          { label:'Fuel price effect',   data:fuel, borderColor:'#D85A30', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, borderDash:[3,3] }
+          { label:'Total projected VMT', data:tot,  borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.07)', fill:true,  tension:0.35, borderWidth:3, pointRadius:pr },
+          { label:'Lane-miles effect',   data:lane, borderColor:'#1D9E75', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[6,4] } },
+          { label:'Population effect',   data:pop,  borderColor:'#BA7517', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[6,4] } },
+          { label:'Fuel price effect',   data:fuel, borderColor:'#D85A30', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[3,3] } }
         ]
       },
       options: {
