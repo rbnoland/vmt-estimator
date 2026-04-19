@@ -384,6 +384,40 @@
       .preset-btn { min-height: 44px; }
     }
 
+    /* ── Input mode toggle ── */
+    .input-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .toggle-group {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .toggle-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle-btn.active {
+      background: var(--red);
+      color: #fff;
+    }
+    .toggle-btn:not(.active):hover { background: var(--card-bg); }
+
     /* ── Print ── */
     /* ── Print button ── */
     .print-section {
@@ -434,7 +468,6 @@
       .print-section,
       .preset-btn,
       input[type=range],
-      .chart-wrap,
       .legend,
       .site-footer { display: none !important; }
 
@@ -539,6 +572,14 @@
       .pos { color: #0a7a56 !important; }
       .neg { color: #b34000 !important; }
 
+      /* Chart: hide canvas, show static image */
+      .chart-wrap canvas { display: none !important; }
+      .chart-wrap { height: auto !important; }
+      #chartPrintImg { display: block !important; width: 100%; max-height: 280pt; }
+
+      /* Hide toggle UI */
+      .input-mode-toggle { display: none !important; }
+
       /* Page break helpers */
       .section-gap { break-before: auto; }
     }
@@ -607,17 +648,25 @@
   <!-- Future year -->
   <div class="card">
     <div class="card-title">Future year projections</div>
+    <!-- Input mode toggle -->
+    <div class="input-mode-toggle">
+      <span>Enter values as:</span>
+      <div class="toggle-group" role="group" aria-label="Input mode">
+        <button class="toggle-btn active" id="modeAbsBtn" onclick="setInputMode('abs')" aria-pressed="true">Absolute values</button>
+        <button class="toggle-btn" id="modePctBtn" onclick="setInputMode('pct')" aria-pressed="false">% change from base</button>
+      </div>
+    </div>
     <div class="input-grid">
       <div class="field">
-        <label>Future lane-miles of major roads<br><small>Freeways, expressways, principal arterials</small></label>
+        <label id="futLaneLabel">Future lane-miles of major roads<br><small>Freeways, expressways, principal arterials</small></label>
         <input type="number" id="futLane" value="8500" min="1" step="100" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
-        <label>Future population<br><small>Thousands</small></label>
+        <label id="futPopLabel">Future population<br><small>Thousands</small></label>
         <input type="number" id="futPop" value="3500" min="1" step="10" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
-        <label>Future fuel price<br><small>Dollars per gallon</small></label>
+        <label id="futPriceLabel">Future fuel price<br><small>Dollars per gallon</small></label>
         <input type="number" id="futPrice" value="4.00" min="0.01" step="0.05" inputmode="decimal">
       </div>
       <div class="field">
@@ -714,6 +763,7 @@
               aria-label="Line chart: projected VMT on major roads and individual factor contributions over the forecast horizon">
         Projected VMT trajectory.
       </canvas>
+      <img id="chartPrintImg" style="display:none;" alt="Projected VMT trajectory chart">
     </div>
     <div class="note">
       <strong>Methodology:</strong> Log-linear elasticity model applied to VMT on major roads (freeways, expressways, and principal arterials) —
@@ -754,8 +804,67 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
   let chart = null;
+  let inputMode = 'abs'; // 'abs' or 'pct'
+
   function g(id) { return document.getElementById(id); }
   function num(id) { return parseFloat(g(id).value) || 0; }
+
+  /* ── Input mode toggle ── */
+  function setInputMode(mode) {
+    if (mode === inputMode) return;
+    const baseLane  = num('baseLane'),
+          basePop   = num('basePop'),
+          basePrice = num('basePrice');
+
+    if (mode === 'pct') {
+      // Convert current absolute future values → % change
+      const fl = num('futLane'), fp = num('futPop'), ff = num('futPrice');
+      g('futLane').value  = baseLane  ? ((fl/baseLane  - 1)*100).toFixed(2) : '0';
+      g('futPop').value   = basePop   ? ((fp/basePop   - 1)*100).toFixed(2) : '0';
+      g('futPrice').value = basePrice ? ((ff/basePrice - 1)*100).toFixed(2) : '0';
+      // Update field attributes for pct mode
+      g('futLane').step  = '0.1'; g('futLane').min  = '-99';
+      g('futPop').step   = '0.1'; g('futPop').min   = '-99';
+      g('futPrice').step = '0.1'; g('futPrice').min = '-99';
+      g('futLaneLabel').innerHTML  = '% change in lane-miles<br><small>Positive = increase · Negative = decrease</small>';
+      g('futPopLabel').innerHTML   = '% change in population<br><small>Positive = increase · Negative = decrease</small>';
+      g('futPriceLabel').innerHTML = '% change in fuel price<br><small>Positive = increase · Negative = decrease</small>';
+    } else {
+      // Convert % change → absolute future values
+      const pl = num('futLane'), pp = num('futPop'), pf = num('futPrice');
+      g('futLane').value  = baseLane  ? (baseLane  * (1 + pl/100)).toFixed(0) : '';
+      g('futPop').value   = basePop   ? (basePop   * (1 + pp/100)).toFixed(0) : '';
+      g('futPrice').value = basePrice ? (basePrice * (1 + pf/100)).toFixed(2) : '';
+      g('futLane').step  = '100'; g('futLane').min  = '1';
+      g('futPop').step   = '10';  g('futPop').min   = '1';
+      g('futPrice').step = '0.05'; g('futPrice').min = '0.01';
+      g('futLaneLabel').innerHTML  = 'Future lane-miles of major roads<br><small>Freeways, expressways, principal arterials</small>';
+      g('futPopLabel').innerHTML   = 'Future population<br><small>Thousands</small>';
+      g('futPriceLabel').innerHTML = 'Future fuel price<br><small>Dollars per gallon</small>';
+    }
+
+    inputMode = mode;
+    g('modeAbsBtn').classList.toggle('active', mode === 'abs');
+    g('modePctBtn').classList.toggle('active', mode === 'pct');
+    g('modeAbsBtn').setAttribute('aria-pressed', mode === 'abs');
+    g('modePctBtn').setAttribute('aria-pressed', mode === 'pct');
+    update();
+  }
+
+  /* Derive absolute future values regardless of input mode */
+  function getFutureAbsolute() {
+    const baseLane  = num('baseLane'),
+          basePop   = num('basePop'),
+          basePrice = num('basePrice');
+    if (inputMode === 'pct') {
+      return {
+        futLane:  baseLane  * (1 + num('futLane')  / 100),
+        futPop:   basePop   * (1 + num('futPop')   / 100),
+        futPrice: basePrice * (1 + num('futPrice') / 100)
+      };
+    }
+    return { futLane: num('futLane'), futPop: num('futPop'), futPrice: num('futPrice') };
+  }
 
   function setPreset(el, ep, ef) {
     g('eLane').value  = el;  g('eLaneVal').textContent  = el.toFixed(2);
@@ -765,12 +874,13 @@
   }
 
   function update() {
-    const baseVMT = num('baseVMT'), baseLane  = num('baseLane'),
-          basePop = num('basePop'), basePrice = num('basePrice'),
-          futLane = num('futLane'), futPop    = num('futPop'),
-          futPrice= num('futPrice'),horizon   = num('horizon') || 10,
-          eLane   = num('eLane'),   ePop      = num('ePop'),
-          ePrice  = num('ePrice');
+    const baseVMT  = num('baseVMT'),  baseLane  = num('baseLane'),
+          basePop  = num('basePop'),  basePrice = num('basePrice'),
+          horizon  = num('horizon') || 10,
+          eLane    = num('eLane'),    ePop      = num('ePop'),
+          ePrice   = num('ePrice');
+
+    const { futLane, futPop, futPrice } = getFutureAbsolute();
 
     if (!baseVMT || !baseLane || !basePop || !basePrice || !futLane || !futPop || !futPrice) return;
 
@@ -869,7 +979,19 @@
     const dateStr = d.toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
     const el = document.getElementById('printDate');
     if (el) el.textContent = 'Generated: ' + dateStr;
+
+    // Capture chart as static PNG for print
+    const canvas = g('vmtChart');
+    const img    = g('chartPrintImg');
+    if (chart && canvas) {
+      img.src = canvas.toDataURL('image/png');
+      img.style.display = 'block';
+    }
+
     window.print();
+
+    // Restore after print dialog closes
+    setTimeout(() => { img.style.display = 'none'; img.src = ''; }, 2000);
   }
 
 </script>
