@@ -644,6 +644,104 @@
       /* Page break helpers */
       .section-gap { break-before: auto; }
     }
+
+
+    /* ── Doc modal ── */
+    .doc-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    .doc-modal-overlay.open { display: flex; }
+    .doc-modal {
+      background: var(--card-bg);
+      color: var(--text);
+      border-radius: 10px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+      max-width: 760px;
+      width: calc(100% - 32px);
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .doc-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .doc-modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .doc-modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .doc-modal-close:hover { background: var(--border); }
+    .doc-modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+    .doc-modal-body h1 { font-size: 18px; margin: 0 0 6px; color: var(--red); }
+    .doc-modal-body h2 { font-size: 15px; margin: 20px 0 6px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .doc-modal-body h3 { font-size: 13px; margin: 14px 0 4px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .doc-modal-body h4 { font-size: 13px; margin: 10px 0 4px; }
+    .doc-modal-body p { margin: 0 0 10px; }
+    .doc-modal-body ul, .doc-modal-body ol { padding-left: 20px; margin: 0 0 10px; }
+    .doc-modal-body li { margin-bottom: 4px; }
+    .doc-modal-body a { color: var(--red); }
+    .doc-modal-body code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+    .doc-modal-body pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: 12px; line-height: 1.5; }
+    .doc-modal-body pre code { background: none; border: none; padding: 0; }
+    .doc-modal-body table { border-collapse: collapse; width: 100%; margin-bottom: 12px; font-size: 12.5px; }
+    .doc-modal-body th { background: var(--bg); border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-weight: 600; }
+    .doc-modal-body td { border: 1px solid var(--border); padding: 6px 10px; }
+    .doc-modal-body strong { color: var(--text); }
+    .doc-modal-body em { font-style: italic; color: var(--text-muted); }
+    /* ── Header doc buttons ── */
+    .header-doc-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px max(20px, var(--safe-left)) 10px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-doc-btn {
+      background: var(--red);
+      border: 1px solid var(--red);
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .header-doc-btn:hover {
+      background: var(--red-dark);
+      border-color: var(--red-dark);
+      color: #fff;
+    }
+    @media print {
+      .header-doc-buttons { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -679,6 +777,10 @@
 <div class="page-title-bar" role="heading" aria-level="1">
   <h1>VMT and GHG Emissions Forecast Based on Changes in Lane-Miles, Population, Fuel Prices, and EV Penetration Rate</h1>
   <p>Estimate future vehicle-miles of travel (VMT) and Greenhouse Gas (GHG) emissions on major roads within a metropolitan statistical area (MSA)</p>
+</div>
+<div class="header-doc-buttons">
+  <button class="header-doc-btn" onclick="openDocModal('readme')">Instructions</button>
+  <button class="header-doc-btn" onclick="openDocModal('docs')">Technical Documentation</button>
 </div>
 
 <main id="main-content" class="main">
@@ -1310,5 +1412,112 @@
   }
 
 </script>
+
+
+
+<div class="doc-modal-overlay" id="docModal" role="dialog" aria-modal="true">
+  <div class="doc-modal">
+    <div class="doc-modal-header">
+      <span class="doc-modal-title" id="docModalTitle"></span>
+      <button class="doc-modal-close" onclick="closeDocModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="doc-modal-body" id="docModalBody"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var README = "## **What This Tool Does**\n\nThe VMT and GHG Emissions Forecast Tool is an interactive web-based calculator that helps planners, researchers, and policy analysts estimate how vehicle travel and greenhouse gas emissions on major roads are likely to change in the future \u2014 and why.\n\n## **Who It\u2019s For**\n\nThis tool is designed for transportation planners, regional and metropolitan planning organizations (MPOs), environmental analysts, and policy researchers who need a straightforward, evidence-based way to project future traffic and emissions without requiring specialized modeling software.\n\n## **What You Can Do With It**\n\n### **Forecast Future Vehicle Travel**\n\nYou provide a snapshot of today\u2019s conditions \u2014 how many vehicle-miles are currently traveled on major roads, how many lane-miles of roadway exist, the current population, and today\u2019s fuel prices. You then enter projections for the future: how much road capacity, population, and fuel prices are expected to change. The tool calculates how vehicle-miles traveled (VMT) will likely shift as a result.\n\n### **Understand What\u2019s Driving the Change**\n\nThe tool breaks down the projected change in travel into three contributing factors:\n\n- **Road capacity \u2014 **adding or removing lane-miles tends to increase or decrease how much people drive\n\n- **Population growth \u2014 **more people generally means more driving\n\n- **Fuel prices \u2014 **higher fuel costs tend to reduce driving, and vice versa\n\nEach factor\u2019s contribution is shown both numerically and visually, making it easy to see which forces are doing the most work.\n\n### **Project Greenhouse Gas Emissions**\n\nBeyond VMT, the tool estimates the greenhouse gas (GHG) emissions associated with that travel. You can choose from several fleet scenarios \u2014 from a typical 2024 US vehicle fleet to fleets with 30% or 70% electric vehicle penetration \u2014 or enter a custom emission factor. You can also specify how quickly the fleet is expected to electrify over time.\n\nThe tool then shows:\n\n- Annual emissions in the base year and future year\n\n- The change in annual emissions\n\n- Cumulative additional emissions over the entire forecast horizon\n\n- A side-by-side chart comparing projected emissions against a counterfactual (what emissions would look like if travel stayed flat but the fleet continued to electrify)\n\n### **Adjust Elasticity Assumptions**\n\nFor users who want more control, the tool allows adjustment of the economic \u201celasticities\u201d that govern how sensitive travel demand is to changes in road supply, population, and fuel price. Pre-set values based on published research are provided as a starting point.\n\n### **Print or Save Your Results**\n\nA print function captures all inputs, elasticity settings, and results in a clean, shareable format.\n\n## **What This Tool Is Not**\n\nThis tool provides planning-level estimates based on established elasticity relationships from transportation research. It is not a full travel demand model and does not account for land use patterns, transit availability, mode shift, or localized network effects. Results are best suited to high-level scenario analysis and policy screening rather than detailed project-level forecasting.\n\n*Developed by the Alan M. Voorhees Transportation Center.*";
+  var DOCS = "# VMT and GHG Emissions Forecast\n\n**Rutgers\u2013New Brunswick, Edward J. Bloustein School of Planning and Public Policy**\n\n**Alan M. Voorhees Transportation Center**\n\nA self-contained, client-side HTML tool for forecasting future vehicle-miles of travel (VMT) and greenhouse gas (GHG) emissions on major roads within a metropolitan statistical area (MSA) based on projected changes in lane-miles, population, and fuel prices. All calculations run in the browser with no server, backend, or installation required.\n\n## Overview\n\nThe tool applies a log-linear elasticity model to estimate how changes in three factors \u2014 road capacity (lane-miles), population, and fuel price \u2014 affect future VMT on major roads (freeways, expressways, and principal arterials). GHG emissions are then derived from the VMT forecast using a fleet-average emission factor that declines over time as the vehicle fleet electrifies.\n\nOutputs include projected future VMT, change in VMT, a factor-level contribution breakdown, a year-by-year VMT trajectory chart, GHG metrics, a GHG trajectory chart, and a printable summary report.\n\n## Getting Started\n\nNo installation or build step is required.\n\n- Save or download vmt-estimator.html.\n\n- Open the file in any modern web browser (Chrome, Firefox, Safari, Edge).\n\n- All inputs, calculations, and outputs are handled locally in the browser.\n\n## Inputs\n\n### Base year inputs\n\n| **Field** | **Default** | **Notes** |\n| --- | --- | --- |\n| Base VMT on major roads | 12,500 | Million miles/year; freeways, expressways, and principal arterials |\n| Base lane-miles of major roads | 8,000 | Freeways, expressways, and principal arterials |\n| Base population | 3,200 | Thousands |\n| Base fuel price | $3.50 | Dollars per gallon |\n\n### Future year projections\n\n| **Field** | **Default** | **Notes** |\n| --- | --- | --- |\n| Future lane-miles of major roads | 8,500 | Can be entered as absolute values or % change from base |\n| Future population | 3,500 | Can be entered as absolute values or % change from base; thousands |\n| Future fuel price | $4.00 | Can be entered as absolute values or % change from base; dollars per gallon |\n| Forecast horizon | 10 | Years; accepted range 1\u201350 |\n\nFuture year values can be entered in two modes, toggled via the **Absolute values / % change from base** selector. Switching modes converts existing entries automatically.\n\n### Elasticity inputs\n\nThree elasticities control the sensitivity of VMT to each factor. Values are set via sliders.\n\n| **Parameter** | **Default** | **Range** | **Description** |\n| --- | --- | --- | --- |\n| Lane-miles elasticity (\u03b5\u2081) | 0.90 | 0.00\u20131.50 | % change in VMT per 1% change in lane-miles |\n| Population elasticity (\u03b5\u2082) | 1.00 | 0.00\u20132.00 | % change in VMT per 1% change in population |\n| Fuel price elasticity (\u03b5\u2083) | \u22120.30 | \u22121.50\u20130.00 | % change in VMT per 1% change in fuel price (negative: higher prices reduce VMT) |\n\n#### Literature-based presets\n\nFour preset elasticity combinations are provided, grounded in the induced-travel literature:\n\n| **Preset** | **\u03b5\u2081** | **\u03b5\u2082** | **\u03b5\u2083** |\n| --- | --- | --- | --- |\n| Short-run typical | 0.90 | 1.00 | \u22120.30 |\n| Long-run typical | 1.10 | 1.05 | \u22120.60 |\n| Low responsiveness | 0.70 | 0.90 | \u22120.15 |\n| High responsiveness | 1.30 | 1.20 | \u22120.80 |\n\n### GHG emissions parameters\n\n| **Field** | **Default** | **Notes** |\n| --- | --- | --- |\n| Fleet type | Average US fleet (2024) \u2014 404 g CO\u2082e/mi | Dropdown; sets the base emission factor |\n| Custom emission factor | 404 | g CO\u2082e/mi; available when \u201cCustom\u201d is selected |\n| Fleet electrification rate | 1.0%/yr | Annual reduction in emission factor; range 0\u20135%/yr; floored at 5% of starting EF |\n\n**Fleet type options:**\n\n| **Option** | **Emission factor** |\n| --- | --- |\n| Average US fleet (2024) | 404 g CO\u2082e/mi |\n| Light-duty vehicles | 350 g CO\u2082e/mi |\n| Fuel-efficient fleet | 270 g CO\u2082e/mi |\n| 30% EV penetration | 180 g CO\u2082e/mi |\n| 70% EV penetration | 80 g CO\u2082e/mi |\n| Custom | User-defined |\n\nEmission factors are sourced from US EPA and FHWA fleet-average estimates.\n\n## Methodology\n\n### VMT forecast model\n\nThe tool applies a log-linear elasticity model to project future VMT on major roads:\n\nVMT_future = VMT_base \u00d7 (\u0394Lane-miles)^\u03b5\u2081 \u00d7 (\u0394Population)^\u03b5\u2082 \u00d7 (\u0394Fuel price)^\u03b5\u2083\n\nWhere each \u0394 term is the ratio of future to base-year value:\n\nfutureVMT = baseVMT\n\n          \u00d7 (futLane  / baseLane )^\u03b5\u2081\n\n          \u00d7 (futPop   / basePop  )^\u03b5\u2082\n\n          \u00d7 (futPrice / basePrice)^\u03b5\u2083\n\nIntermediate years assume smooth (linear) annual change in each factor from the base to the future year value. The model applies only to VMT on major roads \u2014 the same facility class as the lane-miles input (freeways, expressways, and principal arterials).\n\n### Factor contribution breakdown\n\nThe isolated contribution of each factor is computed by holding the other two factors at their base-year values:\n\nLane-miles effect  = baseVMT \u00d7 (laneT / baseLane)^\u03b5\u2081\n\nPopulation effect  = baseVMT \u00d7 (popT  / basePop )^\u03b5\u2082\n\nFuel price effect  = baseVMT \u00d7 (priceT/ basePrice)^\u03b5\u2083\n\nEach contribution is expressed as a percentage change from base-year VMT and displayed as a proportional bar.\n\n### GHG emissions model\n\nAnnual GHG emissions are calculated as:\n\nAnnual GHG (MT CO\u2082e/yr) = VMT (million mi/yr) \u00d7 EF (g CO\u2082e/mi) \u00f7 10\u2076\n\nThe emission factor declines each year as the vehicle fleet electrifies, with a floor at 5% of the starting value:\n\nEF(t) = max(EF\u2080 \u00d7 (1 \u2212 evRate)^t, EF\u2080 \u00d7 0.05)\n\nWhere evRate is the annual fleet electrification rate (as a decimal) and t is the number of years from the base year.\n\n### Counterfactual GHG\n\nA counterfactual GHG trajectory is computed assuming VMT remains at its base-year level while the emission factor still declines:\n\nCounterfactual GHG(t) = VMT_base \u00d7 EF(t) \u00f7 10\u2076\n\nThe gap between projected GHG and the counterfactual represents emissions attributable to the VMT change.\n\n### Cumulative additional GHG\n\nCumulative additional GHG is the sum of the annual gap between projected and counterfactual GHG over the full forecast horizon:\n\nCumulative additional GHG = \u03a3(t=1 to T) [Projected GHG(t) \u2212 Counterfactual GHG(t)]\n\nA positive value indicates net additional emissions due to VMT growth; a negative value indicates net avoided emissions due to VMT reduction.\n\n### Summary metrics\n\n| **Metric** | **Formula** |\n| --- | --- |\n| Future VMT | baseVMT \u00d7 (rLane^\u03b5\u2081) \u00d7 (rPop^\u03b5\u2082) \u00d7 (rPrice^\u03b5\u2083) |\n| Change in VMT | futureVMT \u2212 baseVMT |\n| Percent change | (multiplier \u2212 1) \u00d7 100% |\n| Base year annual GHG | baseVMT \u00d7 EF\u2080 \u00f7 10\u2076 |\n| Future year annual GHG | futureVMT \u00d7 EF(T) \u00f7 10\u2076 |\n| Change in annual GHG | Future GHG \u2212 Base GHG |\n| Cumulative additional GHG | \u03a3 annual gap over forecast horizon |\n\n## Outputs\n\n### VMT forecast metrics\n\nThree real-time metric cards display:\n\n- **Future VMT on major roads** \u2014 million miles/year\n\n- **Change in VMT** \u2014 million miles/year (positive = increase; negative = decrease)\n\n- **Percent change** \u2014 over the specified forecast horizon\n\n### Factor contribution breakdown\n\nA bar chart shows the isolated percentage-point contribution of each factor (lane-miles, population, fuel price) to the total VMT change, scaled relative to the largest contributor.\n\n### VMT trajectory chart\n\nA line chart plots projected total VMT and the three individual factor-effect lines over the forecast horizon. Each factor-effect line holds the other two variables at base-year values, illustrating each factor\u2019s standalone contribution to the trajectory.\n\n### GHG metrics\n\nFour real-time metric cards display:\n\n- **Base year annual GHG** \u2014 MT CO\u2082e/yr\n\n- **Future year annual GHG** \u2014 MT CO\u2082e/yr\n\n- **Change in annual GHG** \u2014 MT CO\u2082e/yr\n\n- **Cumulative additional GHG** \u2014 MT CO\u2082e over the forecast horizon\n\n### Emission factor trajectory chart\n\nA small chart shows how the fleet emission factor (g CO\u2082e/mi) declines from the base year to the end of the forecast horizon under the specified electrification rate.\n\n### GHG trajectory chart\n\nA line chart plots projected annual GHG and the counterfactual (base VMT, declining EF only). The gap between the two lines represents the GHG impact attributable to the VMT change.\n\n### Print / PDF summary\n\nThe **Print / Save as PDF** button captures the current state of all inputs, elasticities, metrics, and charts and opens a print-ready page in a new tab. Using the browser\u2019s \u201cSave as PDF\u201d option produces a formatted report dated at the time of printing.\n\n## Technical notes\n\n- **Single HTML file** with no external dependencies except Chart.js, which is loaded from the Cloudflare CDN (cdnjs.cloudflare.com). An internet connection is required for chart rendering.\n\n- All calculations are triggered automatically on any input change.\n\n- The input mode toggle (absolute / % change) converts values in place without requiring re-entry.\n\n- Charts render using [Chart.js 4.4.1](https://www.chartjs.org/).\n\n- Light and dark mode are supported automatically via CSS prefers-color-scheme.\n\n- The tool is mobile-responsive and touch-accessible, including larger tap targets and prevention of unwanted zoom on iOS.\n\n- Content Security Policy (CSP) meta headers restrict script sources to self and cdnjs.cloudflare.com; all other outbound connections are blocked.\n\n- The pop-up blocker must allow pop-ups from the file\u2019s origin for the Print/PDF feature to work.\n\n## Data sources and references\n\n| **Parameter** | **Source** |\n| --- | --- |\n| Elasticity values | Millard-Ball & Rosen (2025). *Road Capacity as a Fundamental Determinant of Vehicle Travel*. UC Institute of Transportation Studies. [https://escholarship.org/uc/item/180452jz](https://escholarship.org/uc/item/180452jz) |\n| Emission factors | US EPA and FHWA fleet-average estimates |\n| Fleet type presets | US EPA fleet emission factor guidance |\n\n## Limitations\n\n- The model applies only to VMT on major roads (freeways, expressways, and principal arterials) \u2014 the same facility class as the lane-miles input. Local and collector roads are not modeled.\n\n- The log-linear elasticity model assumes constant elasticities over the forecast horizon. Non-linear behavioral responses (e.g., saturation effects, mode shift) are not captured.\n\n- Intermediate-year projections assume smooth linear change in all three factors. Sudden discontinuities (e.g., policy shocks, economic crises) are not modeled.\n\n- The GHG model does not account for changes in fleet composition beyond aggregate electrification rate, nor does it model upstream (lifecycle) emissions.\n\n- The tool does not model induced demand feedback loops, land use change, or transit substitution effects.\n\n## License and attribution\n\nDeveloped by the **Alan M. Voorhees Transportation Center**, Edward J. Bloustein School of Planning and Public Policy, Rutgers\u2013New Brunswick.\n\nWhen citing or adapting this tool, please reference the Voorhees Transportation Center and the elasticity literature cited above.";
+
+  function parseMarkdown(md) {
+    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    var lines = md.split('\n');
+    var out = [];
+    var i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+      if (line.trim().startsWith('```')) {
+        i++;
+        var code = [];
+        while (i < lines.length && !lines[i].trim().startsWith('```')) { code.push(esc(lines[i])); i++; }
+        out.push('<pre><code>' + code.join('\n') + '</code></pre>');
+        i++; continue;
+      }
+      var h = line.match(/^(#{1,4})\s+(.*)/);
+      if (h) { var lvl=h[1].length; out.push('<h'+lvl+'>'+inline(esc(h[2]))+'</h'+lvl+'>'); i++; continue; }
+      if (line.match(/^\|/) && i+1 < lines.length && lines[i+1].match(/^\|[-|: ]+\|/)) {
+        var hcells = line.split('|').slice(1,-1).map(function(c){ return '<th>'+inline(esc(c.trim()))+'</th>'; });
+        var rows = ['<thead><tr>'+hcells.join('')+'</tr></thead>'];
+        i += 2;
+        var body = [];
+        while (i < lines.length && lines[i].match(/^\|/)) {
+          var cells = lines[i].split('|').slice(1,-1).map(function(c){ return '<td>'+inline(esc(c.trim()))+'</td>'; });
+          body.push('<tr>'+cells.join('')+'</tr>');
+          i++;
+        }
+        rows.push('<tbody>'+body.join('')+'</tbody>');
+        out.push('<table>'+rows.join('')+'</table>');
+        continue;
+      }
+      if (line.match(/^[-*+]\s/)) {
+        var items = [];
+        while (i < lines.length && lines[i].match(/^[-*+]\s/)) {
+          items.push('<li>'+inline(esc(lines[i].slice(2)))+'</li>');
+          i++;
+        }
+        out.push('<ul>'+items.join('')+'</ul>');
+        continue;
+      }
+      if (line.match(/^\d+\.\s/)) {
+        var items = [];
+        while (i < lines.length && lines[i].match(/^\d+\.\s/)) {
+          items.push('<li>'+inline(esc(lines[i].replace(/^\d+\.\s/,'')))+'</li>');
+          i++;
+        }
+        out.push('<ol>'+items.join('')+'</ol>');
+        continue;
+      }
+      if (line.match(/^---+$/)) { out.push('<hr>'); i++; continue; }
+      if (line.trim() === '') { i++; continue; }
+      out.push('<p>'+inline(esc(line))+'</p>');
+      i++;
+    }
+    return out.join('\n');
+  }
+
+  function inline(s) {
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+
+  window.openDocModal = function(which) {
+    var md = which === 'readme' ? README : DOCS;
+    var title = which === 'readme' ? 'Instructions' : 'Technical Documentation';
+    document.getElementById('docModalTitle').textContent = title;
+    document.getElementById('docModalBody').innerHTML = parseMarkdown(md);
+    var overlay = document.getElementById('docModal');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeDocModal = function() {
+    document.getElementById('docModal').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  document.getElementById('docModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDocModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDocModal();
+  });
+})();
+</script>
+
 </body>
 </html>
