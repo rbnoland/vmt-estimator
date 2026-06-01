@@ -741,6 +741,27 @@
     }
     @media print {
       .header-doc-buttons { display: none !important; }
+      .unit-toggle-bar { display: none !important; }
+    }
+
+    /* ── Unit toggle bar ── */
+    .unit-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 6px max(20px, var(--safe-left)) 6px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .unit-toggle-bar .toggle-group {
+      border-color: var(--red);
+    }
+    .unit-toggle-bar .toggle-btn {
+      font-size: 12px;
+      padding: 5px 14px;
     }
   </style>
 </head>
@@ -775,12 +796,21 @@
 
 <!-- Page title -->
 <div class="page-title-bar" role="heading" aria-level="1">
-  <h1>VMT and GHG Emissions Forecast Based on Changes in Lane-Miles, Population, Fuel Prices, and EV Penetration Rate</h1>
-  <p>Estimate future vehicle-miles of travel (VMT) and Greenhouse Gas (GHG) emissions on major roads within a metropolitan statistical area (MSA)</p>
+  <h1 id="pageH1">VMT and GHG Emissions Forecast Based on Changes in Lane-Miles, Population, Fuel Prices, and EV Penetration Rate</h1>
+  <p id="pageSubtitle">Estimate future vehicle-miles of travel (VMT) and Greenhouse Gas (GHG) emissions on major roads within a metropolitan statistical area (MSA)</p>
 </div>
 <div class="header-doc-buttons">
   <button class="header-doc-btn" onclick="openDocModal('readme')">Instructions</button>
   <button class="header-doc-btn" onclick="openDocModal('docs')">Technical Documentation</button>
+</div>
+
+<!-- Unit system toggle -->
+<div class="unit-toggle-bar" role="region" aria-label="Unit system">
+  <span>Units:</span>
+  <div class="toggle-group" role="group" aria-label="Unit system">
+    <button class="toggle-btn active" id="unitImperialBtn" onclick="setUnitSystem('imperial')" aria-pressed="true">US / Imperial</button>
+    <button class="toggle-btn" id="unitMetricBtn" onclick="setUnitSystem('metric')" aria-pressed="false">Metric</button>
+  </div>
 </div>
 
 <main id="main-content" class="main">
@@ -790,11 +820,11 @@
     <div class="card-title">Base year inputs</div>
     <div class="input-grid">
       <div class="field">
-        <label>Base VMT on major roads<br><small>Million miles/year · freeways, expressways, principal arterials</small></label>
+        <label id="baseVMTLabel">Base VMT on major roads<br><small id="baseVMTSmall">Million miles/year · freeways, expressways, principal arterials</small></label>
         <input type="number" id="baseVMT" value="12500" min="1" step="100" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
-        <label>Base lane-miles of major roads<br><small>Freeways, expressways, principal arterials</small></label>
+        <label id="baseLaneLabel">Base lane-miles of major roads<br><small id="baseLaneSmall">Freeways, expressways, principal arterials</small></label>
         <input type="number" id="baseLane" value="8000" min="1" step="100" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
@@ -802,7 +832,7 @@
         <input type="number" id="basePop" value="3200" min="1" step="10" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
-        <label>Base fuel price<br><small>Dollars per gallon</small></label>
+        <label id="basePriceLabel">Base fuel price<br><small id="basePriceSmall">Dollars per gallon</small></label>
         <input type="number" id="basePrice" value="3.50" min="0.01" step="0.05" inputmode="decimal">
       </div>
     </div>
@@ -829,7 +859,7 @@
         <input type="number" id="futPop" value="3500" min="1" step="10" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div class="field">
-        <label id="futPriceLabel">Future fuel price<br><small>Dollars per gallon</small></label>
+        <label id="futPriceLabel">Future fuel price<br><small id="futPriceSmall">Dollars per gallon</small></label>
         <input type="number" id="futPrice" value="4.00" min="0.01" step="0.05" inputmode="decimal">
       </div>
       <div class="field">
@@ -846,10 +876,10 @@
 
       <div class="slider-block">
         <div class="slider-label-row">
-          <span>Lane-miles elasticity (ε₁)</span>
+          <span id="eLaneLabel">Lane-miles elasticity (ε₁)</span>
           <span class="slider-val" id="eLaneVal">0.90</span>
         </div>
-        <input type="range" id="eLane" min="0" max="1.5" step="0.05" value="0.9" aria-label="Lane-miles elasticity">
+        <input type="range" id="eLane" min="0" max="1.5" step="0.05" value="0.9" aria-label="Lane elasticity">
       </div>
 
       <div class="slider-block">
@@ -889,14 +919,14 @@
   <!-- Results metrics -->
   <div class="metric-grid" role="region" aria-label="Forecast results">
     <div class="metric">
-      <div class="metric-label">Future VMT on major roads</div>
+      <div class="metric-label" id="outVMTLabel">Future VMT on major roads</div>
       <div class="metric-value" id="outVMT" aria-live="polite">—</div>
-      <div class="metric-sub">million miles/year</div>
+      <div class="metric-sub" id="outVMTSub">million miles/year</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Change in VMT</div>
+      <div class="metric-label" id="outDeltaLabel">Change in VMT</div>
       <div class="metric-value" id="outDelta" aria-live="polite">—</div>
-      <div class="metric-sub">million miles/year</div>
+      <div class="metric-sub" id="outDeltaSub">million miles/year</div>
     </div>
     <div class="metric">
       <div class="metric-label">Percent change</div>
@@ -913,30 +943,30 @@
 
   <!-- Chart -->
   <div class="card">
-    <div class="card-title">Projected VMT trajectory &amp; factor contributions</div>
+    <div class="card-title" id="vmtChartTitle">Projected VMT trajectory &amp; factor contributions</div>
     <div class="legend" aria-hidden="true">
-      <span class="leg-item"><span class="leg-solid" style="background:#185FA5;"></span>Total projected VMT</span>
-      <span class="leg-item"><span class="leg-dash" style="border-color:#1D9E75;"></span>Lane-miles effect</span>
+      <span class="leg-item"><span class="leg-solid" style="background:#185FA5;"></span><span id="legVMTTotal">Total projected VMT</span></span>
+      <span class="leg-item"><span class="leg-dash" style="border-color:#1D9E75;"></span><span id="legLaneEffect">Lane-miles effect</span></span>
       <span class="leg-item"><span class="leg-dash" style="border-color:#BA7517;"></span>Population effect</span>
       <span class="leg-item"><span class="leg-dot"  style="border-color:#D85A30;"></span>Fuel price effect</span>
     </div>
     <div class="chart-wrap">
       <canvas id="vmtChart"
               role="img"
-              aria-label="Line chart: projected VMT on major roads and individual factor contributions over the forecast horizon">
-        Projected VMT trajectory.
+              aria-label="Line chart: projected VMT/VKT on major roads and individual factor contributions over the forecast horizon">
+        <span id="vmtChartFallback">Projected VMT trajectory.</span>
       </canvas>
       <img id="chartPrintImg" style="display:none;" alt="Projected VMT trajectory chart">
     </div>
     <div class="note">
-      <strong>Methodology:</strong> Log-linear elasticity model applied to VMT on major roads (freeways, expressways, and principal arterials) —
-      the same facility class as the lane-miles input.
-      VMT<sub>future</sub> = VMT<sub>base</sub> &times; (&Delta;Lane-miles)<sup>&epsilon;&#x2081;</sup>
+      <strong>Methodology:</strong> Log-linear elasticity model applied to <span id="methVMT">VMT</span> on major roads (freeways, expressways, and principal arterials) —
+      the same facility class as the <span id="methLaneInput">lane-miles</span> input.
+      <span id="methFormula">VMT<sub>future</sub> = VMT<sub>base</sub> &times; (&Delta;Lane-miles)<sup>&epsilon;&#x2081;</sup></span>
       &times; (&Delta;Population)<sup>&epsilon;&#x2082;</sup>
       &times; (&Delta;Fuel price)<sup>&epsilon;&#x2083;</sup>.
       Factor-only lines hold the other two variables at base-year values.
       Intermediate years assume smooth annual change.
-      Elasticity values are grounded in the induced-travel literature; for background on road capacity as a determinant of VMT see
+      Elasticity values are grounded in the induced-travel literature; for background on road capacity as a determinant of <span id="methVMTRef">VMT</span> see
       Millard-Ball &amp; Rosen (2025), <a href="https://escholarship.org/uc/item/180452jz" target="_blank" rel="noopener noreferrer"><em>Road Capacity as a Fundamental Determinant of Vehicle Travel</em></a>, UC Institute of Transportation Studies.
     </div>
   </div>
@@ -950,19 +980,19 @@
       <div class="card-title">Emissions parameters</div>
 
       <div class="field" style="margin-bottom:14px;">
-        <label>Fleet type<br><small>Sets the base emission factor (g CO₂e/mi)</small></label>
+        <label id="fleetTypeLabel">Fleet type<br><small id="fleetTypeSmall">Sets the base emission factor (g CO₂e/mi)</small></label>
         <select id="fleetType" onchange="onFleetChange()">
-          <option value="404">Average US fleet (2024) — 404 g CO₂e/mi</option>
-          <option value="350">Light-duty vehicles — 350 g CO₂e/mi</option>
-          <option value="270">Fuel-efficient fleet — 270 g CO₂e/mi</option>
-          <option value="180">30% EV penetration — 180 g CO₂e/mi</option>
-          <option value="80">70% EV penetration — 80 g CO₂e/mi</option>
+          <option value="404" id="efOpt404">Average US fleet (2024) — 404 g CO₂e/mi</option>
+          <option value="350" id="efOpt350">Light-duty vehicles — 350 g CO₂e/mi</option>
+          <option value="270" id="efOpt270">Fuel-efficient fleet — 270 g CO₂e/mi</option>
+          <option value="180" id="efOpt180">30% EV penetration — 180 g CO₂e/mi</option>
+          <option value="80" id="efOpt80">70% EV penetration — 80 g CO₂e/mi</option>
           <option value="custom">Custom g CO₂e/mi…</option>
         </select>
       </div>
 
       <div class="field" id="customEFField" style="display:none; margin-bottom:14px;">
-        <label>Custom emission factor<br><small>g CO₂e per mile</small></label>
+        <label id="customEFLabel">Custom emission factor<br><small id="customEFSmall">g CO₂e per mile</small></label>
         <input type="number" id="customEF" value="404" min="1" max="1000" step="1" inputmode="numeric" pattern="[0-9]*">
       </div>
 
@@ -1013,8 +1043,8 @@
   <div class="card">
     <div class="card-title">Projected annual GHG trajectory</div>
     <div class="legend" aria-hidden="true">
-      <span class="leg-item"><span class="leg-solid" style="background:#D85A30;"></span>Projected annual GHG (changing VMT + declining EF)</span>
-      <span class="leg-item"><span class="leg-dash" style="border-color:#185FA5;"></span>Counterfactual (base VMT, declining EF only)</span>
+      <span class="leg-item"><span class="leg-solid" style="background:#D85A30;"></span><span id="legGHGProjected">Projected annual GHG (changing VMT + declining EF)</span></span>
+      <span class="leg-item"><span class="leg-dash" style="border-color:#185FA5;"></span><span id="legGHGCounterfactual">Counterfactual (base VMT, declining EF only)</span></span>
     </div>
     <div class="chart-wrap">
       <canvas id="ghgChart" role="img" aria-label="Line chart: projected annual GHG and counterfactual over the forecast horizon"></canvas>
@@ -1022,11 +1052,11 @@
     </div>
     <div class="note">
       <strong>GHG methodology:</strong>
-      Annual GHG (MT CO₂e/yr) = VMT (million mi/yr) × emission factor (g CO₂e/mi) ÷ 10⁶.
+      <span id="ghgMethodNote">Annual GHG (MT CO₂e/yr) = VMT (million mi/yr) × emission factor (g CO₂e/mi) ÷ 10⁶.</span>
       The emission factor declines each year as the fleet electrifies:
       EF(t) = max(EF₀ × (1 − rate)<sup>t</sup>, 5% of EF₀).
-      The <em>counterfactual</em> line shows emissions if VMT stayed at its base-year level (EF still declines);
-      the gap between the two lines is the GHG attributable to the VMT change.
+      The <em>counterfactual</em> line shows emissions if <span id="ghgCtfVMT">VMT</span> stayed at its base-year level (EF still declines);
+      the gap between the two lines is the GHG attributable to the <span id="ghgAttrVMT">VMT</span> change.
       Cumulative additional GHG is the sum of that annual gap over the forecast horizon.
       Emission factors are sourced from US EPA and FHWA fleet-average estimates.
     </div>
@@ -1062,13 +1092,192 @@
   let chart = null, ghgChart = null, efChart = null;
   let inputMode = 'abs';
 
+  /* ── Unit system ── */
+  let unitSystem = 'imperial'; // 'imperial' | 'metric'
+  const MI_TO_KM   = 1.60934;  // 1 mile = 1.60934 km
+  const GAL_TO_L   = 3.78541;  // 1 gallon = 3.78541 liters
+
+  // Emission factors in g CO₂e/mi (imperial). Stored as constants.
+  const EF_OPTIONS_IMPERIAL = [
+    { value: '404', label: 'Average US fleet (2024) — 404 g CO₂e/mi' },
+    { value: '350', label: 'Light-duty vehicles — 350 g CO₂e/mi' },
+    { value: '270', label: 'Fuel-efficient fleet — 270 g CO₂e/mi' },
+    { value: '180', label: '30% EV penetration — 180 g CO₂e/mi' },
+    { value: '80',  label: '70% EV penetration — 80 g CO₂e/mi' },
+    { value: 'custom', label: 'Custom g CO₂e/mi…' },
+  ];
+
+  function efImperialToMetric(efPerMile) { return efPerMile / MI_TO_KM; }
+  function efMetricToImperial(efPerKm)   { return efPerKm   * MI_TO_KM; }
+
+  function setUnitSystem(sys) {
+    if (sys === unitSystem) return;
+    const wasImperial = unitSystem === 'imperial';
+    unitSystem = sys;
+    const isMetric = sys === 'metric';
+
+    // ---- Convert input values ----
+    // Base VMT
+    const bvmt = parseFloat(g('baseVMT').value) || 0;
+    g('baseVMT').value = isMetric
+      ? (bvmt * MI_TO_KM).toFixed(0)
+      : (bvmt / MI_TO_KM).toFixed(0);
+
+    // Base lane-miles / lane-km
+    const bl = parseFloat(g('baseLane').value) || 0;
+    g('baseLane').value = isMetric
+      ? (bl * MI_TO_KM).toFixed(0)
+      : (bl / MI_TO_KM).toFixed(0);
+
+    // Future lane-miles / lane-km (only in abs mode; pct mode is unitless)
+    if (inputMode === 'abs') {
+      const fl = parseFloat(g('futLane').value) || 0;
+      g('futLane').value = isMetric
+        ? (fl * MI_TO_KM).toFixed(0)
+        : (fl / MI_TO_KM).toFixed(0);
+    }
+
+    // Base fuel price $/gal ↔ $/L
+    const bp = parseFloat(g('basePrice').value) || 0;
+    g('basePrice').value = isMetric
+      ? (bp / GAL_TO_L).toFixed(3)
+      : (bp * GAL_TO_L).toFixed(2);
+
+    // Future fuel price (only in abs mode)
+    if (inputMode === 'abs') {
+      const fp = parseFloat(g('futPrice').value) || 0;
+      g('futPrice').value = isMetric
+        ? (fp / GAL_TO_L).toFixed(3)
+        : (fp * GAL_TO_L).toFixed(2);
+    }
+
+    // Custom EF g CO₂e/mi ↔ g CO₂e/km
+    const cef = parseFloat(g('customEF').value) || 404;
+    g('customEF').value = isMetric
+      ? efImperialToMetric(cef).toFixed(2)
+      : efMetricToImperial(cef).toFixed(2);
+
+    // ---- Update labels ----
+    const distUnit   = isMetric ? 'km'  : 'miles';
+    const distAbbr   = isMetric ? 'km'  : 'mi';
+    const volUnit    = isMetric ? 'liter' : 'gallon';
+    const currency   = isMetric ? '$/L' : '$/gal';
+    const efUnit     = isMetric ? 'g CO₂e/km' : 'g CO₂e/mi';
+
+    g('baseVMTLabel').innerHTML   = `Base VKT/VMT on major roads<br><small id="baseVMTSmall">Million ${distUnit}/year · freeways, expressways, principal arterials</small>`;
+    g('baseLaneLabel').innerHTML  = `Base lane-${distUnit} of major roads<br><small id="baseLaneSmall">Freeways, expressways, principal arterials</small>`;
+    g('basePriceLabel').innerHTML = `Base fuel price<br><small id="basePriceSmall">${isMetric ? 'Dollars per litre' : 'Dollars per gallon'}</small>`;
+
+    // Future labels (abs mode only — pct mode has its own labels set in setInputMode)
+    if (inputMode === 'abs') {
+      g('futLaneLabel').innerHTML  = `Future lane-${distUnit} of major roads<br><small>Freeways, expressways, principal arterials</small>`;
+      g('futPriceLabel').innerHTML = `Future fuel price<br><small id="futPriceSmall">${isMetric ? 'Dollars per litre' : 'Dollars per gallon'}</small>`;
+    }
+
+    // Result metric-sub labels
+    g('outVMTSub').textContent   = `million ${distUnit}/year`;
+    g('outDeltaSub').textContent = `million ${distUnit}/year`;
+
+    // Metric card headings
+    g('outVMTLabel').textContent  = isMetric ? 'Future VKT on major roads'  : 'Future VMT on major roads';
+    g('outDeltaLabel').textContent = isMetric ? 'Change in VKT'             : 'Change in VMT';
+
+    // Page heading & subtitle
+    const laneDistWord = isMetric ? 'Lane-Kilometres' : 'Lane-Miles';
+    g('pageH1').textContent = `${isMetric ? 'VKT' : 'VMT'} and GHG Emissions Forecast Based on Changes in ${laneDistWord}, Population, Fuel Prices, and EV Penetration Rate`;
+    g('pageSubtitle').textContent = `Estimate future vehicle-${isMetric ? 'kilometres' : 'miles'} of travel (${isMetric ? 'VKT' : 'VMT'}) and Greenhouse Gas (GHG) emissions on major roads within a metropolitan statistical area (MSA)`;
+
+    // Elasticity section
+    g('eLaneLabel').textContent = isMetric ? 'Lane-km elasticity (ε₁)' : 'Lane-miles elasticity (ε₁)';
+
+    // VMT chart card title & legend
+    g('vmtChartTitle').innerHTML = `Projected ${isMetric ? 'VKT' : 'VMT'} trajectory &amp; factor contributions`;
+    g('legVMTTotal').textContent  = `Total projected ${isMetric ? 'VKT' : 'VMT'}`;
+    g('legLaneEffect').textContent = isMetric ? 'Lane-km effect' : 'Lane-miles effect';
+    g('vmtChartFallback').textContent = `Projected ${isMetric ? 'VKT' : 'VMT'} trajectory.`;
+
+    // Methodology note under VMT chart
+    const travelAbbr = isMetric ? 'VKT' : 'VMT';
+    const laneWord   = isMetric ? 'Lane-km'    : 'Lane-miles';
+    const laneInputW = isMetric ? 'lane-km'    : 'lane-miles';
+    g('methVMT').textContent      = travelAbbr;
+    g('methLaneInput').textContent = laneInputW;
+    g('methFormula').innerHTML    = `${travelAbbr}<sub>future</sub> = ${travelAbbr}<sub>base</sub> &times; (&Delta;${laneWord})<sup>&epsilon;&#x2081;</sup>`;
+
+    // GHG chart legends
+    const vktAbbr = isMetric ? 'VKT' : 'VMT';
+    g('legGHGProjected').textContent      = `Projected annual GHG (changing ${vktAbbr} + declining EF)`;
+    g('legGHGCounterfactual').textContent = `Counterfactual (base ${vktAbbr}, declining EF only)`;
+
+    // GHG methodology note
+    const distAb = isMetric ? 'km' : 'mi';
+    g('ghgMethodNote').textContent = `Annual GHG (MT CO₂e/yr) = ${vktAbbr} (million ${distAb}/yr) × emission factor (${efUnit}) ÷ 10⁶.`;
+    g('methVMTRef').textContent  = vktAbbr;
+    g('ghgCtfVMT').textContent   = vktAbbr;
+    g('ghgAttrVMT').textContent  = vktAbbr;
+
+    // Fleet type options
+    const sel = g('fleetType');
+    const curVal = sel.value;
+    const efBase = [404, 350, 270, 180, 80];
+    const efLabels = ['Average US fleet (2024)', 'Light-duty vehicles', 'Fuel-efficient fleet', '30% EV penetration', '70% EV penetration'];
+    const efValues = efBase.map(v => isMetric ? efImperialToMetric(v) : v);
+    for (let i = 0; i < 5; i++) {
+      const opt = sel.options[i];
+      const displayVal = efValues[i].toFixed(isMetric ? 1 : 0);
+      opt.value = efValues[i].toFixed(isMetric ? 4 : 0);
+      opt.textContent = `${efLabels[i]} — ${displayVal} ${efUnit}`;
+    }
+    sel.options[5].textContent = `Custom ${efUnit}…`;
+
+    // Custom EF label
+    g('fleetTypeSmall').textContent = `Sets the base emission factor (${efUnit})`;
+    g('customEFSmall').textContent  = `${efUnit.replace('g ', 'g ')} per ${distAbbr}`;
+    g('customEFLabel').innerHTML    = `Custom emission factor<br><small id="customEFSmall">${efUnit}</small>`;
+
+    // EF chart y-axis label (updated via chart options on next render)
+
+    // Toggle buttons
+    g('unitImperialBtn').classList.toggle('active', !isMetric);
+    g('unitMetricBtn').classList.toggle('active', isMetric);
+    g('unitImperialBtn').setAttribute('aria-pressed', String(!isMetric));
+    g('unitMetricBtn').setAttribute('aria-pressed', String(isMetric));
+
+    update();
+  }
+
+  /* Convert a display value to internal (imperial) miles/gallons for computation.
+     All internal math always uses imperial miles/gallons. We convert inputs → imperial
+     before computing, then convert display outputs back. */
+  function toImperial(val, type) {
+    if (unitSystem === 'imperial') return val;
+    if (type === 'dist')  return val / MI_TO_KM;   // km → miles
+    if (type === 'price') return val * GAL_TO_L;   // $/L → $/gal
+    if (type === 'ef')    return val * MI_TO_KM;   // g/km → g/mi
+    return val;
+  }
+  function fromImperial(val, type) {
+    if (unitSystem === 'imperial') return val;
+    if (type === 'dist')  return val * MI_TO_KM;
+    if (type === 'price') return val / GAL_TO_L;
+    if (type === 'ef')    return val / MI_TO_KM;
+    return val;
+  }
+
+  function distLabel() { return unitSystem === 'metric' ? 'km' : 'miles'; }
+  function distAbbr()  { return unitSystem === 'metric' ? 'km' : 'mi'; }
+  function efUnitLabel() { return unitSystem === 'metric' ? 'g CO\u2082e/km' : 'g CO\u2082e/mi'; }
+  function vmtAxisLabel() { return `VMT on major roads (million ${distAbbr()}/yr)`; }
+
   function g(id) { return document.getElementById(id); }
   function num(id) { return parseFloat(g(id).value) || 0; }
 
   /* ── GHG helpers ── */
   function getBaseEF() {
     const sel = g('fleetType').value;
-    return sel === 'custom' ? (num('customEF') || 404) : parseFloat(sel);
+    // sel.value may be in metric units if metric mode; convert to imperial for internal math
+    let efDisplay = sel === 'custom' ? (num('customEF') || 404) : parseFloat(sel);
+    return toImperial(efDisplay, 'ef'); // always returns g CO₂e/mi internally
   }
   function efAtYear(baseEF, evRate, i) {
     return Math.max(baseEF * Math.pow(1 - evRate, i), baseEF * 0.05);
@@ -1091,35 +1300,37 @@
   /* ── Input mode toggle ── */
   function setInputMode(mode) {
     if (mode === inputMode) return;
-    const baseLane  = num('baseLane'),
-          basePop   = num('basePop'),
-          basePrice = num('basePrice');
+    // Work in display units (whatever the current unit system is)
+    const baseLane_disp  = num('baseLane');
+    const basePop        = num('basePop');
+    const basePrice_disp = num('basePrice');
+    const isMetric       = unitSystem === 'metric';
+    const dl             = isMetric ? 'km' : 'miles';
+    const priceUnit      = isMetric ? 'Dollars per litre' : 'Dollars per gallon';
 
     if (mode === 'pct') {
-      // Convert current absolute future values → % change
       const fl = num('futLane'), fp = num('futPop'), ff = num('futPrice');
-      g('futLane').value  = baseLane  ? ((fl/baseLane  - 1)*100).toFixed(2) : '0';
-      g('futPop').value   = basePop   ? ((fp/basePop   - 1)*100).toFixed(2) : '0';
-      g('futPrice').value = basePrice ? ((ff/basePrice - 1)*100).toFixed(2) : '0';
-      // Update field attributes for pct mode
+      g('futLane').value  = baseLane_disp  ? ((fl/baseLane_disp  - 1)*100).toFixed(2) : '0';
+      g('futPop').value   = basePop        ? ((fp/basePop        - 1)*100).toFixed(2) : '0';
+      g('futPrice').value = basePrice_disp ? ((ff/basePrice_disp - 1)*100).toFixed(2) : '0';
       g('futLane').step  = '0.1'; g('futLane').min  = '-99';
       g('futPop').step   = '0.1'; g('futPop').min   = '-99';
       g('futPrice').step = '0.1'; g('futPrice').min = '-99';
-      g('futLaneLabel').innerHTML  = '% change in lane-miles<br><small>Positive = increase · Negative = decrease</small>';
+      g('futLaneLabel').innerHTML  = `% change in lane-${dl}<br><small>Positive = increase · Negative = decrease</small>`;
       g('futPopLabel').innerHTML   = '% change in population<br><small>Positive = increase · Negative = decrease</small>';
       g('futPriceLabel').innerHTML = '% change in fuel price<br><small>Positive = increase · Negative = decrease</small>';
     } else {
-      // Convert % change → absolute future values
       const pl = num('futLane'), pp = num('futPop'), pf = num('futPrice');
-      g('futLane').value  = baseLane  ? (baseLane  * (1 + pl/100)).toFixed(0) : '';
-      g('futPop').value   = basePop   ? (basePop   * (1 + pp/100)).toFixed(0) : '';
-      g('futPrice').value = basePrice ? (basePrice * (1 + pf/100)).toFixed(2) : '';
+      g('futLane').value  = baseLane_disp  ? (baseLane_disp  * (1 + pl/100)).toFixed(0) : '';
+      g('futPop').value   = basePop        ? (basePop        * (1 + pp/100)).toFixed(0) : '';
+      g('futPrice').value = basePrice_disp ? (basePrice_disp * (1 + pf/100)).toFixed(isMetric ? 3 : 2) : '';
       g('futLane').step  = '100'; g('futLane').min  = '1';
       g('futPop').step   = '10';  g('futPop').min   = '1';
-      g('futPrice').step = '0.05'; g('futPrice').min = '0.01';
-      g('futLaneLabel').innerHTML  = 'Future lane-miles of major roads<br><small>Freeways, expressways, principal arterials</small>';
+      g('futPrice').step = isMetric ? '0.01' : '0.05';
+      g('futPrice').min  = isMetric ? '0.001' : '0.01';
+      g('futLaneLabel').innerHTML  = `Future lane-${dl} of major roads<br><small>Freeways, expressways, principal arterials</small>`;
       g('futPopLabel').innerHTML   = 'Future population<br><small>Thousands</small>';
-      g('futPriceLabel').innerHTML = 'Future fuel price<br><small>Dollars per gallon</small>';
+      g('futPriceLabel').innerHTML = `Future fuel price<br><small id="futPriceSmall">${priceUnit}</small>`;
     }
 
     inputMode = mode;
@@ -1130,19 +1341,23 @@
     update();
   }
 
-  /* Derive absolute future values regardless of input mode */
+  /* Derive absolute future values in IMPERIAL units regardless of input mode/unit system */
   function getFutureAbsolute() {
-    const baseLane  = num('baseLane'),
-          basePop   = num('basePop'),
-          basePrice = num('basePrice');
+    const baseLane_imp  = toImperial(num('baseLane'),  'dist');
+    const basePop       = num('basePop');
+    const basePrice_imp = toImperial(num('basePrice'), 'price');
     if (inputMode === 'pct') {
       return {
-        futLane:  baseLane  * (1 + num('futLane')  / 100),
-        futPop:   basePop   * (1 + num('futPop')   / 100),
-        futPrice: basePrice * (1 + num('futPrice') / 100)
+        futLane:  baseLane_imp  * (1 + num('futLane')  / 100),
+        futPop:   basePop       * (1 + num('futPop')   / 100),
+        futPrice: basePrice_imp * (1 + num('futPrice') / 100)
       };
     }
-    return { futLane: num('futLane'), futPop: num('futPop'), futPrice: num('futPrice') };
+    return {
+      futLane:  toImperial(num('futLane'),  'dist'),
+      futPop:   num('futPop'),
+      futPrice: toImperial(num('futPrice'), 'price')
+    };
   }
 
   function setPreset(el, ep, ef) {
@@ -1153,30 +1368,46 @@
   }
 
   function update() {
-    const baseVMT  = num('baseVMT'),  baseLane  = num('baseLane'),
-          basePop  = num('basePop'),  basePrice = num('basePrice'),
-          horizon  = num('horizon') || 10,
-          eLane    = num('eLane'),    ePop      = num('ePop'),
-          ePrice   = num('ePrice');
+    // All internal computation in imperial (miles, gallons, g CO₂e/mi)
+    const baseVMT_imp  = toImperial(num('baseVMT'),   'dist');
+    const baseLane_imp = toImperial(num('baseLane'),  'dist');
+    const basePop      = num('basePop');
+    const basePrice_imp= toImperial(num('basePrice'), 'price');
+    const horizon      = num('horizon') || 10;
+    const eLane        = num('eLane');
+    const ePop         = num('ePop');
+    const ePrice       = num('ePrice');
 
-    const { futLane, futPop, futPrice } = getFutureAbsolute();
+    const { futLane, futPop, futPrice } = getFutureAbsolute(); // always imperial
 
-    if (!baseVMT || !baseLane || !basePop || !basePrice || !futLane || !futPop || !futPrice) return;
+    if (!baseVMT_imp || !baseLane_imp || !basePop || !basePrice_imp || !futLane || !futPop || !futPrice) return;
 
-    const rLane = futLane/baseLane, rPop = futPop/basePop, rPrice = futPrice/basePrice;
-    const mult  = Math.pow(rLane,eLane) * Math.pow(rPop,ePop) * Math.pow(rPrice,ePrice);
-    const futVMT = baseVMT * mult, delta = futVMT - baseVMT, pct = (mult-1)*100;
+    const rLane  = futLane / baseLane_imp;
+    const rPop   = futPop  / basePop;
+    const rPrice = futPrice / basePrice_imp;
+    const mult   = Math.pow(rLane, eLane) * Math.pow(rPop, ePop) * Math.pow(rPrice, ePrice);
+    const futVMT_imp = baseVMT_imp * mult;
+    const delta_imp  = futVMT_imp - baseVMT_imp;
+    const pct        = (mult - 1) * 100;
 
-    g('outVMT').textContent   = Math.round(futVMT).toLocaleString();
-    g('outDelta').textContent = (delta>=0?'+':'') + Math.round(delta).toLocaleString();
-    g('outDelta').className   = 'metric-value ' + (delta>=0 ? 'pos' : 'neg');
+    // Convert display values
+    const baseVMT_disp  = fromImperial(baseVMT_imp,  'dist');
+    const futVMT_disp   = fromImperial(futVMT_imp,   'dist');
+    const delta_disp    = fromImperial(delta_imp,    'dist');
+    const distU         = unitSystem === 'metric' ? 'km' : 'mi';
+
+    g('outVMT').textContent   = Math.round(futVMT_disp).toLocaleString();
+    g('outDelta').textContent = (delta_imp>=0?'+':'') + Math.round(delta_disp).toLocaleString();
+    g('outDelta').className   = 'metric-value ' + (delta_imp>=0 ? 'pos' : 'neg');
     g('outPct').textContent   = (pct>=0?'+':'') + pct.toFixed(1) + '%';
     g('outPct').className     = 'metric-value ' + (pct>=0 ? 'pos' : 'neg');
     g('outHorizonLbl').textContent = 'over ' + Math.round(horizon) + ' years';
+    g('outVMTSub').textContent   = `million ${distU}/year`;
+    g('outDeltaSub').textContent = `million ${distU}/year`;
 
-    const laneEff  = (Math.pow(rLane, eLane)  - 1) * 100;
-    const popEff   = (Math.pow(rPop,  ePop)   - 1) * 100;
-    const priceEff = (Math.pow(rPrice,ePrice)  - 1) * 100;
+    const laneEff  = (Math.pow(rLane,  eLane)  - 1) * 100;
+    const popEff   = (Math.pow(rPop,   ePop)   - 1) * 100;
+    const priceEff = (Math.pow(rPrice, ePrice) - 1) * 100;
     const maxEff   = Math.max(Math.abs(laneEff), Math.abs(popEff), Math.abs(priceEff), 1);
 
     function bar(val, col) {
@@ -1184,10 +1415,11 @@
       return `<div class="contrib-bar-bg"><div class="contrib-bar-fill" style="width:${p}%;background:${col};"></div></div>`;
     }
     function sign(v) { return v>=0 ? 'pos' : 'neg'; }
+    const laneUnit = unitSystem === 'metric' ? 'Lane-km' : 'Lane-miles';
 
     g('contrib').innerHTML = `
       <div class="contrib-row">
-        <div class="contrib-header"><span>Lane-miles (ε₁ = ${eLane.toFixed(2)})</span><span class="${sign(laneEff)}">${laneEff>=0?'+':''}${laneEff.toFixed(1)}%</span></div>
+        <div class="contrib-header"><span>${laneUnit} (ε₁ = ${eLane.toFixed(2)})</span><span class="${sign(laneEff)}">${laneEff>=0?'+':''}${laneEff.toFixed(1)}%</span></div>
         ${bar(laneEff,'#1D9E75')}
       </div>
       <div class="contrib-row">
@@ -1199,30 +1431,34 @@
         ${bar(priceEff,'#D85A30')}
       </div>`;
 
+    // Chart: display in chosen units
     const years = Math.round(horizon);
     const labels=[], tot=[], lane=[], pop=[], fuel=[];
     for (let y=0; y<=years; y++) {
       const t = y/years;
-      const lT = baseLane  + (futLane -baseLane) *t;
-      const pT = basePop   + (futPop  -basePop)  *t;
-      const fT = basePrice + (futPrice-basePrice) *t;
-      tot .push(+(baseVMT * Math.pow(lT/baseLane,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice,ePrice)).toFixed(1));
-      lane.push(+(baseVMT * Math.pow(lT/baseLane,eLane)).toFixed(1));
-      pop .push(+(baseVMT * Math.pow(pT/basePop, ePop) ).toFixed(1));
-      fuel.push(+(baseVMT * Math.pow(fT/basePrice,ePrice)).toFixed(1));
+      const lT = baseLane_imp  + (futLane  - baseLane_imp)  * t;
+      const pT = basePop       + (futPop   - basePop)       * t;
+      const fT = basePrice_imp + (futPrice - basePrice_imp) * t;
+      const vT = baseVMT_imp * Math.pow(lT/baseLane_imp,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice_imp,ePrice);
+      tot .push(+fromImperial(vT, 'dist').toFixed(1));
+      lane.push(+fromImperial(baseVMT_imp * Math.pow(lT/baseLane_imp,eLane), 'dist').toFixed(1));
+      pop .push(+fromImperial(baseVMT_imp * Math.pow(pT/basePop,  ePop),     'dist').toFixed(1));
+      fuel.push(+fromImperial(baseVMT_imp * Math.pow(fT/basePrice_imp,ePrice),'dist').toFixed(1));
       labels.push(y===0 ? 'Base' : 'Yr '+y);
     }
 
     const pr   = years <= 15 ? 3 : 0;
     const skip = years > 15;
+    const tLabel = unitSystem === 'metric' ? 'Total projected VKT' : 'Total projected VMT';
+    const lLabel = unitSystem === 'metric' ? 'Lane-km effect'       : 'Lane-miles effect';
     if (chart) { chart.destroy(); chart = null; }
     chart = new Chart(g('vmtChart'), {
       type: 'line',
       data: {
         labels,
         datasets: [
-          { label:'Total projected VMT', data:tot,  borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.07)', fill:true,  tension:0.35, borderWidth:3, pointRadius:pr },
-          { label:'Lane-miles effect',   data:lane, borderColor:'#1D9E75', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[6,4] } },
+          { label: tLabel, data:tot,  borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.07)', fill:true,  tension:0.35, borderWidth:3, pointRadius:pr },
+          { label: lLabel, data:lane, borderColor:'#1D9E75', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[6,4] } },
           { label:'Population effect',   data:pop,  borderColor:'#BA7517', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[6,4] } },
           { label:'Fuel price effect',   data:fuel, borderColor:'#D85A30', backgroundColor:'transparent',         fill:false, tension:0.35, borderWidth:2, pointRadius:pr, segment:{ borderDash:()=>[3,3] } }
         ]
@@ -1231,91 +1467,86 @@
         responsive:true, maintainAspectRatio:false,
         plugins: {
           legend: { display:false },
-          tooltip: { callbacks: { label: ctx => ' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString()+' M mi/yr' } }
+          tooltip: { callbacks: { label: ctx => ' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString()+' M '+distU+'/yr' } }
         },
         scales: {
           x: { ticks:{ font:{size:11}, maxRotation:45, autoSkip:skip, maxTicksLimit:12 }, grid:{display:false} },
           y: {
             ticks: { font:{size:11}, callback: v => v.toLocaleString() },
             grid:  { color:'rgba(128,128,128,0.1)' },
-            title: { display:true, text:'VMT on major roads (million miles/yr)', font:{size:11} }
+            title: { display:true, text:`${unitSystem === 'metric' ? 'VKT' : 'VMT'} on major roads (million ${distU}/yr)`, font:{size:11} }
           }
         }
       }
     });
 
-    /* ── GHG computation ── */
-    const baseEF  = getBaseEF();
-    const evRate  = num('evRate') / 100;
-    const years2  = Math.round(horizon);
+    /* ── GHG computation (always in imperial g CO₂e/mi internally) ── */
+    const baseEF   = getBaseEF();          // g CO₂e/mi
+    const evRate   = num('evRate') / 100;
+    const years2   = Math.round(horizon);
 
-    // Base-year GHG
-    const baseGHG = vmtToGHG(baseVMT, baseEF);
-
-    // Future-year GHG: use EF at end of horizon
-    const futEF   = efAtYear(baseEF, evRate, years2);
-    const futGHG  = vmtToGHG(futVMT, futEF);
-
-    // Delta annual GHG (attributable to VMT change + EF change combined)
+    const baseGHG  = vmtToGHG(baseVMT_imp, baseEF);
+    const futEF    = efAtYear(baseEF, evRate, years2);
+    const futGHG   = vmtToGHG(futVMT_imp,  futEF);
     const deltaGHG = futGHG - baseGHG;
 
-    // Cumulative additional GHG: year-by-year sum of [projected GHG - counterfactual GHG]
     let cumAdd = 0;
     for (let y = 1; y <= years2; y++) {
       const t = y / years2;
-      const lT  = baseLane  + (futLane  - baseLane)  * t;
-      const pT  = basePop   + (futPop   - basePop)   * t;
-      const fT  = basePrice + (futPrice - basePrice)  * t;
-      const vmtY = baseVMT * Math.pow(lT/baseLane,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice,ePrice);
+      const lT   = baseLane_imp  + (futLane  - baseLane_imp)  * t;
+      const pT   = basePop       + (futPop   - basePop)       * t;
+      const fT   = basePrice_imp + (futPrice - basePrice_imp) * t;
+      const vmtY = baseVMT_imp * Math.pow(lT/baseLane_imp,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice_imp,ePrice);
       const efY  = efAtYear(baseEF, evRate, y);
-      const projGHGy   = vmtToGHG(vmtY, efY);
-      const ctfactGHGy = vmtToGHG(baseVMT, efY);
-      cumAdd += projGHGy - ctfactGHGy;
+      cumAdd += vmtToGHG(vmtY, efY) - vmtToGHG(baseVMT_imp, efY);
     }
 
     g('ghgBase').textContent   = fmtGHG(baseGHG);
     g('ghgFuture').textContent = fmtGHG(futGHG);
     const dSign = deltaGHG >= 0 ? '+' : '';
-    g('ghgDelta').textContent   = dSign + fmtGHG(deltaGHG);
-    g('ghgDelta').className     = 'metric-value ' + (deltaGHG >= 0 ? 'neg' : 'pos');
+    g('ghgDelta').textContent  = dSign + fmtGHG(deltaGHG);
+    g('ghgDelta').className    = 'metric-value ' + (deltaGHG >= 0 ? 'neg' : 'pos');
     const cSign = cumAdd >= 0 ? '+' : '';
-    g('ghgCum').textContent     = cSign + fmtGHG(cumAdd);
-    g('ghgCum').className       = 'metric-value ' + (cumAdd >= 0 ? 'neg' : 'pos');
-    g('ghgCumLbl').textContent  = 'over ' + years2 + ' years';
+    g('ghgCum').textContent    = cSign + fmtGHG(cumAdd);
+    g('ghgCum').className      = 'metric-value ' + (cumAdd >= 0 ? 'neg' : 'pos');
+    g('ghgCumLbl').textContent = 'over ' + years2 + ' years';
 
-    // EF note
-    g('efNote').textContent = 'EF declines from ' + baseEF.toFixed(0) + ' g CO\u2082e/mi (base) to ' +
-      futEF.toFixed(0) + ' g CO\u2082e/mi (yr ' + years2 + ') with ' +
-      (evRate*100).toFixed(1) + '%/yr electrification.';
+    // EF display note — show in currently selected unit
+    const baseEF_disp = fromImperial(baseEF, 'ef');
+    const futEF_disp  = fromImperial(futEF,  'ef');
+    const efU         = efUnitLabel();
+    g('efNote').textContent = `EF declines from ${baseEF_disp.toFixed(1)} ${efU} (base) to ${futEF_disp.toFixed(1)} ${efU} (yr ${years2}) with ${(evRate*100).toFixed(1)}%/yr electrification.`;
 
-    // Build year-by-year arrays for charts
-    const ghgLabels = [], projGHGArr = [], ctfactGHGArr = [], efArr = [];
+    // GHG trajectory arrays
+    const ghgLabels=[], projGHGArr=[], ctfactGHGArr=[], efArr=[];
     for (let y = 0; y <= years2; y++) {
       const t = y / years2;
-      const lT  = baseLane  + (futLane  - baseLane)  * t;
-      const pT  = basePop   + (futPop   - basePop)   * t;
-      const fT  = basePrice + (futPrice - basePrice)  * t;
-      const vmtY = y === 0 ? baseVMT :
-        baseVMT * Math.pow(lT/baseLane,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice,ePrice);
+      const lT   = baseLane_imp  + (futLane  - baseLane_imp)  * t;
+      const pT   = basePop       + (futPop   - basePop)       * t;
+      const fT   = basePrice_imp + (futPrice - basePrice_imp) * t;
+      const vmtY = y === 0 ? baseVMT_imp :
+        baseVMT_imp * Math.pow(lT/baseLane_imp,eLane) * Math.pow(pT/basePop,ePop) * Math.pow(fT/basePrice_imp,ePrice);
       const efY  = efAtYear(baseEF, evRate, y);
-      projGHGArr .push(+vmtToGHG(vmtY, efY).toFixed(4));
-      ctfactGHGArr.push(+vmtToGHG(baseVMT, efY).toFixed(4));
-      efArr.push(+efY.toFixed(1));
+      projGHGArr .push(+vmtToGHG(vmtY,        efY).toFixed(4));
+      ctfactGHGArr.push(+vmtToGHG(baseVMT_imp, efY).toFixed(4));
+      efArr.push(+fromImperial(efY, 'ef').toFixed(1)); // display in chosen unit
       ghgLabels.push(y === 0 ? 'Base' : 'Yr ' + y);
     }
 
     const prGHG   = years2 <= 15 ? 3 : 0;
     const skipGHG = years2 > 15;
 
+    const ghgProjLabel  = unitSystem === 'metric' ? 'Projected GHG (changing VKT + declining EF)' : 'Projected GHG (changing VMT + declining EF)';
+    const ghgCtfLabel   = unitSystem === 'metric' ? 'Counterfactual (base VKT, declining EF only)' : 'Counterfactual (base VMT, declining EF only)';
     if (ghgChart) { ghgChart.destroy(); ghgChart = null; }
     ghgChart = new Chart(g('ghgChart'), {
       type: 'line',
       data: {
         labels: ghgLabels,
         datasets: [
-          { label:'Projected GHG', data:projGHGArr, borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.07)',
+          { label: ghgProjLabel, data:projGHGArr, borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.07)',
             fill:true, tension:0.35, borderWidth:3, pointRadius:prGHG },
-          { label:'Counterfactual GHG', data:ctfactGHGArr, borderColor:'#185FA5', backgroundColor:'transparent',
+          { label: ghgCtfLabel, data:ctfactGHGArr, borderColor:'#185FA5', backgroundColor:'transparent',
             fill:false, tension:0.35, borderWidth:2, pointRadius:prGHG,
             segment:{ borderDash:()=>[6,4] } }
         ]
@@ -1345,7 +1576,7 @@
       data: {
         labels: ghgLabels,
         datasets: [{
-          label:'EF (g CO\u2082e/mi)', data:efArr,
+          label:`EF (${efU})`, data:efArr,
           borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.10)',
           fill:true, tension:0.35, borderWidth:2, pointRadius:0
         }]
@@ -1353,13 +1584,13 @@
       options: {
         responsive:true, maintainAspectRatio:false,
         plugins: { legend:{display:false},
-          tooltip:{ callbacks:{ label: ctx => ' '+ctx.parsed.y.toFixed(0)+' g CO\u2082e/mi' }}
+          tooltip:{ callbacks:{ label: ctx => ` ${ctx.parsed.y.toFixed(1)} ${efU}` }}
         },
         scales: {
           x: { ticks:{font:{size:10}, maxRotation:45, autoSkip:true, maxTicksLimit:6}, grid:{display:false} },
           y: {
             ticks:{font:{size:10}}, grid:{color:'rgba(128,128,128,0.1)'},
-            title:{display:true, text:'g CO\u2082e/mi', font:{size:10}}
+            title:{display:true, text:efU, font:{size:10}}
           }
         }
       }
