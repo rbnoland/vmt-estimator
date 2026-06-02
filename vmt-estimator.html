@@ -505,14 +505,14 @@
 
     /* ── Full print stylesheet ── */
     @media print {
-      /* Reset page */
+      /* ── Page setup ── */
       @page {
         size: letter portrait;
-        margin: 18mm 16mm 16mm;
+        margin: 14mm 16mm 16mm;
       }
-      @page :first { margin-top: 14mm; }
+      @page :first { margin-top: 10mm; }
 
-      /* Hide interactive / nav chrome */
+      /* ── Hide interactive chrome ── */
       .skip-link,
       .site-header,
       .page-title-bar,
@@ -520,17 +520,21 @@
       .preset-btn,
       input[type=range],
       .legend,
-      .site-footer { display: none !important; }
+      .site-footer,
+      .input-mode-toggle,
+      .header-doc-buttons,
+      .unit-toggle-bar { display: none !important; }
 
-      /* Unhide the print-only report header */
+      /* ── Show print-only header ── */
       .print-header { display: block !important; }
 
+      /* ── Base typography ── */
       body {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-size: 10pt;
-        color: #000;
+        font-size: 11pt;
+        color: #111;
         background: #fff;
-        line-height: 1.5;
+        line-height: 1.6;
       }
 
       .main {
@@ -539,110 +543,149 @@
         margin: 0;
       }
 
-      /* Cards become clean report panels */
+      /* ── Cards ── */
       .card {
-        border: 0.5pt solid #ccc;
+        border: 0.75pt solid #d0d0d0;
         border-radius: 4pt;
-        padding: 10pt 12pt;
-        margin-bottom: 10pt;
+        padding: 12pt 14pt;
+        margin-bottom: 12pt;
         box-shadow: none;
         background: #fff;
         break-inside: avoid;
       }
+
       .card-title {
-        font-size: 8pt;
+        font-size: 10pt;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #555;
-        margin-bottom: 8pt;
-        padding-bottom: 4pt;
-        border-bottom: 0.5pt solid #ccc;
+        letter-spacing: 0.07em;
+        color: #444;
+        margin-bottom: 10pt;
+        padding-bottom: 5pt;
+        border-bottom: 1pt solid #d0d0d0;
       }
       .card-title::before { display: none; }
 
-      /* Input grids — show as labeled value pairs */
+      /* ── Input grid: two columns ── */
       .input-grid {
+        display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 8pt;
+        gap: 10pt;
       }
+
+      .field {
+        break-inside: avoid;
+      }
+
       .field label {
-        font-size: 8pt;
-        color: #555;
+        font-size: 9pt;
+        font-weight: 600;
+        color: #444;
         display: block;
         margin-bottom: 2pt;
+        line-height: 1.4;
       }
-      .field label small { font-size: 7pt; }
-      .field input[type=number] {
-        border: 0.5pt solid #aaa;
-        border-radius: 2pt;
-        padding: 3pt 6pt;
-        font-size: 10pt;
-        font-weight: 600;
-        background: #f9f9f9;
-        width: 100%;
-      }
-
-      /* Two-col elasticity layout */
-      .two-col { grid-template-columns: 1fr 1fr; gap: 10pt; margin-bottom: 10pt; }
-
-      /* Slider rows: hide slider, show value only */
-      .slider-block { margin-bottom: 8pt; }
-      .slider-label-row { margin-bottom: 2pt; }
-      .slider-label-row span:first-child { font-size: 9pt; color: #444; }
-      .slider-val { font-size: 11pt; font-weight: 700; }
-
-      /* Metric cards */
-      .metric-grid { grid-template-columns: repeat(3,1fr); gap: 8pt; }
-      .metric {
-        border: 0.5pt solid #ccc;
-        border-radius: 4pt;
-        padding: 8pt 10pt;
-        background: #f5f5f3;
-      }
-      .metric-label { font-size: 8pt; color: #555; }
-      .metric-value { font-size: 16pt; }
-      .metric-sub   { font-size: 8pt; }
-
-      /* Contribution bars — show text only */
-      .contrib-header { font-size: 9pt; }
-      .contrib-bar-bg { height: 5pt; margin-top: 3pt; background: #e0e0e0; }
-      .contrib-bar-fill { height: 5pt; }
-
-      /* Note box */
-      .note {
+      .field label small {
         font-size: 8pt;
-        color: #555;
+        font-weight: 400;
+        color: #777;
+        display: block;
+      }
+      .field input[type=number] {
+        border: 0.75pt solid #bbb;
+        border-radius: 3pt;
+        padding: 4pt 7pt;
+        font-size: 12pt;
+        font-weight: 700;
+        color: #111;
+        background: #f8f8f6;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* ── Elasticity two-col layout ── */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12pt;
+        margin-bottom: 10pt;
+      }
+
+      /* ── Slider rows: hide handle, show label + value ── */
+      .slider-block { margin-bottom: 10pt; break-inside: avoid; }
+      .slider-label-row { display: flex; justify-content: space-between; margin-bottom: 1pt; }
+      .slider-label-row span:first-child { font-size: 10pt; color: #333; font-weight: 500; }
+      .slider-val { font-size: 13pt; font-weight: 700; color: #111; }
+
+      /* ── Metric result cards ── */
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9pt;
+      }
+      .metric {
+        border: 0.75pt solid #d0d0d0;
+        border-radius: 4pt;
+        padding: 9pt 11pt;
         background: #f5f5f3;
-        border-left: 2pt solid #ccc;
-        padding: 6pt 8pt;
-        margin-top: 8pt;
+        break-inside: avoid;
+      }
+      .metric-label { font-size: 9pt; color: #555; font-weight: 600; line-height: 1.3; margin-bottom: 3pt; }
+      .metric-value { font-size: 20pt; font-weight: 700; line-height: 1.1; }
+      .metric-sub   { font-size: 9pt; color: #666; margin-top: 2pt; }
+
+      /* ── Contribution bars ── */
+      .contrib-row { margin-bottom: 8pt; break-inside: avoid; }
+      .contrib-header { font-size: 10pt; font-weight: 500; display: flex; justify-content: space-between; margin-bottom: 3pt; }
+      .contrib-bar-bg { height: 6pt; margin-top: 2pt; background: #e4e4e2; border-radius: 2pt; }
+      .contrib-bar-fill { height: 6pt; border-radius: 2pt; }
+
+      /* ── Note / methodology boxes ── */
+      .note {
+        font-size: 9pt;
+        color: #444;
+        background: #f7f7f5;
+        border-left: 2.5pt solid #CC0033;
+        padding: 7pt 10pt;
+        margin-top: 9pt;
+        line-height: 1.55;
+        break-inside: avoid;
       }
 
-      /* Colors */
-      .pos { color: #0a7a56 !important; }
-      .neg { color: #b34000 !important; }
-
-      /* Chart: hide canvas, show static image */
-      .chart-wrap canvas { display: none !important; }
-      .chart-wrap { height: auto !important; }
-      #chartPrintImg { display: block !important; width: 100%; max-height: 280pt; }
-
-      /* Hide toggle UI */
-      .input-mode-toggle { display: none !important; }
-
-      /* 4-col GHG metric grid — collapse to 2-col in print */
-      [style*="grid-template-columns:repeat(4"] {
-        grid-template-columns: repeat(2, 1fr) !important;
+      /* ── GHG section label ── */
+      .section-label {
+        font-size: 10pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #444;
+        margin: 12pt 0 7pt;
+        border-bottom: 0.75pt solid #d0d0d0;
+        padding-bottom: 4pt;
+        break-after: avoid;
       }
-
-      /* GHG section label */
-      .section-label { font-size: 9pt; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.06em; color: #555; margin: 8pt 0 6pt; border-bottom: 0.5pt solid #ccc; padding-bottom: 3pt; }
       .section-label::before { display: none; }
 
-      /* Page break helpers */
+      /* ── GHG metric grid: 2x2 ── */
+      [style*="grid-template-columns:repeat(4"] {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 9pt !important;
+      }
+
+      /* ── Colour tokens ── */
+      .pos { color: #096b47 !important; }
+      .neg { color: #b03500 !important; }
+
+      /* ── Charts: hide canvas, show pre-rendered PNG ── */
+      .chart-wrap { height: auto !important; min-height: 0 !important; }
+      .chart-wrap canvas { display: none !important; }
+      #chartPrintImg    { display: block !important; width: 100%; max-height: 260pt; object-fit: contain; }
+      #ghgChartPrintImg { display: block !important; width: 100%; max-height: 260pt; object-fit: contain; }
+      #efChartPrintImg  { display: block !important; width: 100%; max-height: 160pt; object-fit: contain; }
+
+      /* ── Page break helpers ── */
       .section-gap { break-before: auto; }
+      .card.ghg-card { break-before: page; }
     }
 
 
@@ -769,18 +812,18 @@
 
 <a href="#main-content" class="skip-link">Skip to main content</a>
 <!-- Print-only report header (hidden on screen) -->
-<div class="print-header" style="display:none; margin-bottom:14pt; border-bottom:1.5pt solid #CC0033; padding-bottom:10pt;">
+<div class="print-header" style="display:none; margin-bottom:16pt; border-bottom:2pt solid #CC0033; padding-bottom:12pt;">
   <table style="width:100%; border-collapse:collapse;">
     <tr>
-      <td style="vertical-align:middle; width:60%;">
-        <div style="font-size:15pt; font-weight:700; color:#1a1a1a; line-height:1.3;">VMT and GHG Emissions Forecast Report</div>
-        <div style="font-size:9pt; color:#555; margin-top:3pt;">Based on Changes in Lane-Miles, Population, Fuel Prices, and EV Penetration Rate</div>
-        <div style="font-size:8pt; color:#888; margin-top:4pt;">Alan M. Voorhees Transportation Center &middot; Edward J. Bloustein School of Planning and Public Policy &middot; Rutgers University</div>
+      <td style="vertical-align:middle; width:65%;">
+        <div style="font-size:17pt; font-weight:700; color:#1a1a1a; line-height:1.25;" id="printHeaderTitle">VMT and GHG Emissions Forecast Report</div>
+        <div style="font-size:11pt; color:#444; margin-top:5pt; line-height:1.4;" id="printHeaderSubtitle">Based on Changes in Lane-Miles, Population, Fuel Prices, and EV Penetration Rate</div>
+        <div style="font-size:9pt; color:#777; margin-top:5pt;">Alan M. Voorhees Transportation Center &middot; Edward J. Bloustein School of Planning and Public Policy &middot; Rutgers University</div>
       </td>
-      <td style="vertical-align:middle; text-align:right; width:40%;">
-        <div style="font-size:8pt; color:#888;" id="printDate"></div>
-        <div style="font-size:8pt; color:#888; margin-top:2pt;">Vehicle-Miles of Travel on Major Roads</div>
-        <div style="font-size:7pt; color:#aaa; margin-top:2pt;">(Freeways, Expressways, and Principal Arterials)</div>
+      <td style="vertical-align:middle; text-align:right; width:35%;">
+        <div style="font-size:10pt; color:#555; font-weight:600;" id="printDate"></div>
+        <div style="font-size:9pt; color:#777; margin-top:3pt;" id="printHeaderFacility">Vehicle-Miles of Travel on Major Roads</div>
+        <div style="font-size:8pt; color:#aaa; margin-top:2pt;">(Freeways, Expressways, and Principal Arterials)</div>
       </td>
     </tr>
   </table>
@@ -1010,6 +1053,7 @@
       <div class="card-title">Emission factor over horizon</div>
       <div class="chart-wrap" style="height:clamp(140px,25vw,200px);">
         <canvas id="efChart" role="img" aria-label="Emission factor trajectory over forecast horizon"></canvas>
+        <img id="efChartPrintImg" style="display:none;" alt="Emission factor trajectory chart">
       </div>
       <div style="font-size:11px;color:var(--text-hint);margin-top:8px;" id="efNote"></div>
     </div>
@@ -1040,7 +1084,7 @@
   </div>
 
   <!-- GHG Chart -->
-  <div class="card">
+  <div class="card ghg-card">
     <div class="card-title">Projected annual GHG trajectory</div>
     <div class="legend" aria-hidden="true">
       <span class="leg-item"><span class="leg-solid" style="background:#D85A30;"></span><span id="legGHGProjected">Projected annual GHG (changing VMT + declining EF)</span></span>
@@ -1617,7 +1661,19 @@
     const el = document.getElementById('printDate');
     if (el) el.textContent = 'Generated: ' + dateStr;
 
-    // Capture chart as static PNG for print
+    // Update print header text to reflect current unit system
+    const isMetric = unitSystem === 'metric';
+    const travelWord = isMetric ? 'Vehicle-Kilometres of Travel' : 'Vehicle-Miles of Travel';
+    const travelAbbr = isMetric ? 'VKT' : 'VMT';
+    const laneWord   = isMetric ? 'Lane-Kilometres' : 'Lane-Miles';
+    const phTitle    = document.getElementById('printHeaderTitle');
+    const phSub      = document.getElementById('printHeaderSubtitle');
+    const phFacility = document.getElementById('printHeaderFacility');
+    if (phTitle)    phTitle.textContent    = `${travelAbbr} and GHG Emissions Forecast Report`;
+    if (phSub)      phSub.textContent      = `Based on Changes in ${laneWord}, Population, Fuel Prices, and EV Penetration Rate`;
+    if (phFacility) phFacility.textContent = `${travelWord} on Major Roads`;
+
+    // Capture VMT chart as static PNG for print
     const canvas = g('vmtChart');
     const img    = g('chartPrintImg');
     if (chart && canvas) {
@@ -1633,12 +1689,21 @@
       ghgImg.style.display = 'block';
     }
 
+    // Capture EF chart as static PNG for print
+    const efCanvas = g('efChart');
+    const efImg    = g('efChartPrintImg');
+    if (efChart && efCanvas) {
+      efImg.src = efCanvas.toDataURL('image/png');
+      efImg.style.display = 'block';
+    }
+
     window.print();
 
     // Restore after print dialog closes
     setTimeout(() => {
-      img.style.display = 'none'; img.src = '';
+      img.style.display    = 'none'; img.src    = '';
       ghgImg.style.display = 'none'; ghgImg.src = '';
+      efImg.style.display  = 'none'; efImg.src  = '';
     }, 2000);
   }
 
