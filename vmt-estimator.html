@@ -688,11 +688,11 @@
 
       /* ── GHG section: force onto its own page as a unit ── */
       .ghg-section-wrapper {
-        break-before: page;
-        break-inside: avoid-page;
+        break-before: page !important;
+        page-break-before: always !important;
       }
 
-      /* ── Section label: never orphaned ── */
+      /* ── Section label: never orphaned, but allow page break before the wrapper ── */
       .section-label {
         font-size: 10pt;
         font-weight: 700;
@@ -703,7 +703,7 @@
         border-bottom: 0.75pt solid #d0d0d0;
         padding-bottom: 4pt;
         break-after: avoid;
-        break-before: avoid;
+        break-before: auto;
       }
       .section-label::before { display: none; }
 
@@ -1038,7 +1038,7 @@
 
 
   <!-- GHG Parameters -->
-  <div class="ghg-section-wrapper">
+  <div class="ghg-section-wrapper" style="page-break-before: always;">
   <div class="section-label section-gap">Greenhouse gas estimation</div>
 
   <div class="two-col">
