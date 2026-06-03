@@ -683,9 +683,32 @@
       #ghgChartPrintImg { display: block !important; width: 100%; max-height: 260pt; object-fit: contain; }
       #efChartPrintImg  { display: block !important; width: 100%; max-height: 160pt; object-fit: contain; }
 
-      /* ── Page break helpers ── */
-      .section-gap { break-before: auto; }
-      .card.ghg-card { break-before: page; }
+      /* ── Hide presets in print ── */
+      .no-print { display: none !important; }
+
+      /* ── GHG section: force onto its own page as a unit ── */
+      .ghg-section-wrapper {
+        break-before: page;
+        break-inside: avoid-page;
+      }
+
+      /* ── Section label: never orphaned ── */
+      .section-label {
+        font-size: 10pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #444;
+        margin: 0 0 7pt;
+        border-bottom: 0.75pt solid #d0d0d0;
+        padding-bottom: 4pt;
+        break-after: avoid;
+        break-before: avoid;
+      }
+      .section-label::before { display: none; }
+
+      /* ── Remove redundant ghg-card page break (wrapper handles it now) ── */
+      .card.ghg-card { break-before: auto; }
     }
 
 
@@ -942,8 +965,7 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Literature-based presets</div>
+    <div class="card no-print">
       <button class="preset-btn" onclick="setPreset(0.9,1.0,-0.3)">
         <strong>Short-run typical</strong>ε₁=0.90 · ε₂=1.00 · ε₃=−0.30
       </button>
@@ -1016,6 +1038,7 @@
 
 
   <!-- GHG Parameters -->
+  <div class="ghg-section-wrapper">
   <div class="section-label section-gap">Greenhouse gas estimation</div>
 
   <div class="two-col">
@@ -1105,6 +1128,7 @@
       Emission factors are sourced from US EPA and FHWA fleet-average estimates.
     </div>
   </div>
+  </div><!-- /.ghg-section-wrapper -->
 
 
   <!-- Print / PDF section -->
@@ -1173,22 +1197,20 @@
       ? (bl * MI_TO_KM).toFixed(0)
       : (bl / MI_TO_KM).toFixed(0);
 
-    // Future lane-miles / lane-km (only in abs mode; pct mode is unitless)
-    if (inputMode === 'abs') {
-      const fl = parseFloat(g('futLane').value) || 0;
-      g('futLane').value = isMetric
-        ? (fl * MI_TO_KM).toFixed(0)
-        : (fl / MI_TO_KM).toFixed(0);
-    }
-
     // Base fuel price $/gal ↔ $/L
     const bp = parseFloat(g('basePrice').value) || 0;
     g('basePrice').value = isMetric
       ? (bp / GAL_TO_L).toFixed(3)
       : (bp * GAL_TO_L).toFixed(2);
 
-    // Future fuel price (only in abs mode)
+    // Future values — only convert the absolute numbers in abs mode.
+    // In pct mode the values are already unitless percentages; no conversion needed.
     if (inputMode === 'abs') {
+      const fl = parseFloat(g('futLane').value) || 0;
+      g('futLane').value = isMetric
+        ? (fl * MI_TO_KM).toFixed(0)
+        : (fl / MI_TO_KM).toFixed(0);
+
       const fp = parseFloat(g('futPrice').value) || 0;
       g('futPrice').value = isMetric
         ? (fp / GAL_TO_L).toFixed(3)
@@ -1212,10 +1234,14 @@
     g('baseLaneLabel').innerHTML  = `Base lane-${distUnit} of major roads<br><small id="baseLaneSmall">Freeways, expressways, principal arterials</small>`;
     g('basePriceLabel').innerHTML = `Base fuel price<br><small id="basePriceSmall">${isMetric ? 'Dollars per litre' : 'Dollars per gallon'}</small>`;
 
-    // Future labels (abs mode only — pct mode has its own labels set in setInputMode)
+    // Future labels — update for whatever inputMode is currently active
     if (inputMode === 'abs') {
       g('futLaneLabel').innerHTML  = `Future lane-${distUnit} of major roads<br><small>Freeways, expressways, principal arterials</small>`;
       g('futPriceLabel').innerHTML = `Future fuel price<br><small id="futPriceSmall">${isMetric ? 'Dollars per litre' : 'Dollars per gallon'}</small>`;
+    } else {
+      // pct mode: lane label uses distUnit word; price label is unitless but update anyway
+      g('futLaneLabel').innerHTML  = `% change in lane-${distUnit}<br><small>Positive = increase · Negative = decrease</small>`;
+      g('futPriceLabel').innerHTML = '% change in fuel price<br><small>Positive = increase · Negative = decrease</small>';
     }
 
     // Result metric-sub labels
